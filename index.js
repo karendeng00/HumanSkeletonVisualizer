@@ -15,7 +15,7 @@ app.get('/',function(req,res){
 });
 
 app.get('/visualize',function(req,res){
-  res.sendFile(path.join(__dirname+'/views/visualize.html'));
+  res.sendFile(path.join(__dirname+'/blender/manikin.html'));
   //__dirname : It will resolve to your project folder.
 });
 
