@@ -7,7 +7,7 @@ var path = require('path');
 //   res.sendFile(path.join(__dirname+'/home.html'));
 // })
 
-app.use('/css', express.static(__dirname + '/node_modules/bootstrap/dist/css'));
+app.use('/public', express.static(__dirname + '/public'));
 
 app.get('/',function(req,res){
   res.sendFile(path.join(__dirname+'/views/home.html'));
@@ -15,7 +15,7 @@ app.get('/',function(req,res){
 });
 
 app.get('/visualize',function(req,res){
-  res.sendFile(path.join(__dirname+'/blender/manikin.html'));
+  res.sendFile(path.join(__dirname+'/views/visualize.html'));
   //__dirname : It will resolve to your project folder.
 });
 
