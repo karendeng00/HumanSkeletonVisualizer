@@ -19,6 +19,11 @@ app.get('/visualize',function(req,res){
   //__dirname : It will resolve to your project folder.
 });
 
+app.get('/web',function(req,res){
+  res.sendFile(path.join(__dirname+'/blender/manikin.html'));
+  //__dirname : It will resolve to your project folder.
+});
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
