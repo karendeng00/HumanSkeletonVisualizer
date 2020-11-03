@@ -8,6 +8,7 @@ var path = require('path');
 // })
 
 app.use('/public', express.static(__dirname + '/public'));
+app.use('/blender', express.static(__dirname + '/blender'));
 
 app.get('/',function(req,res){
   res.sendFile(path.join(__dirname+'/views/home.html'));
@@ -19,10 +20,10 @@ app.get('/visualize',function(req,res){
   //__dirname : It will resolve to your project folder.
 });
 
-app.get('/web',function(req,res){
-  res.sendFile(path.join(__dirname+'/blender/manikin.html'));
-  //__dirname : It will resolve to your project folder.
-});
+// app.get('/web',function(req,res){
+//   res.sendFile(path.join(__dirname+'/blender/manikin.glb'));
+//   //__dirname : It will resolve to your project folder.
+// });
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
