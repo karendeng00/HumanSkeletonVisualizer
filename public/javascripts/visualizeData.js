@@ -17,9 +17,9 @@ window.onload = function() {
    
     camera.position.z = 1;
     camera.position.y = 1;
-
     var loader = new GLTFLoader();
     loader.load("../blender/manikin.glb", gltf => {
+        
         scene.add( gltf.scene );
         renderer.render(scene, camera);
         console.log(renderer)
