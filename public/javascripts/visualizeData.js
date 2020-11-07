@@ -2,7 +2,7 @@ import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threej
 import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
 import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/loaders/GLTFLoader.js';
 
-let camera, scene, renderer;
+let camera, scene, renderer, controls, stats;
 
 const mouse = new THREE.Vector2();
 const target = new THREE.Vector2();
@@ -12,41 +12,42 @@ mouseX = 0,
 mouseY = 0;
 
 init();
-animate();
+render();
 
 function init() {
 
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 500 );
     
     camera.position.z = 1;
-    camera.position.y = 1;
+    camera.position.y = 0;
+    camera.rotation.z = 1;
+ 
 
     scene = new THREE.Scene();
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setSize( window.innerWidth, window.innerHeight );
     scene.background = new THREE.Color( 0xADD8E6);
+    scene.position.y = -1;
     document.body.appendChild( renderer.domElement );
 
+   
+    
     var loader = new GLTFLoader();
+    var lightA1 = new THREE.AmbientLight(0xFFFFFF, 1.5)
+    scene.add(lightA1)
+
     loader.load("../blender/source/rp_claudia_rigged_002_yup_a.glb", gltf => {
-    scene.add( gltf.scene );
+        // gltf.scene.position.set(-2,-2,-2)
+        scene.add( gltf.scene );
     // renderer.render(scene, camera);
     }, undefined, function ( error ) {
         console.error( error );
     }
     );
-    
     document.addEventListener( 'wheel', onMouseWheel, false );
-    document.addEventListener('mousemove', function (e) {
-        onMouseMove(e);
-    }, false);
-    document.addEventListener('mousedown', function (e) {
-        onMouseDown(e);
-    }, false);
-    document.addEventListener('mouseup', function (e) {
-        onMouseUp(e);
-    }, false);
-    
+    controls = new OrbitControls( camera, renderer.domElement );
+    controls.addEventListener( 'change', render );
+    animate();
 
     
 }
@@ -82,58 +83,14 @@ function init() {
     // }
     
   
-
-function onMouseMove(evt) {
-    if (!mouseDown) {
-        return;
-    }
-
-    evt.preventDefault();
-
-    var deltaX = evt.clientX - mouseX,
-        deltaY = evt.clientY - mouseY;
-    mouseX = evt.clientX;
-    mouseY = evt.clientY;
-    rotateScene(deltaX, deltaY);
-}
-
-function onMouseDown(evt) {
-    evt.preventDefault();
-
-    mouseDown = true;
-    mouseX = evt.clientX;
-    mouseY = evt.clientY;
-}
-
-function onMouseUp(evt) {
-    evt.preventDefault();
-
-    mouseDown = false;
-}
-
-
-function rotateScene(deltaX, deltaY) {
-    camera.rotation.y += deltaX / 100;
-    camera.rotation.x += deltaY / 100;
-}
-
-
-
 function onMouseWheel( event ) {
-
     camera.position.z += event.deltaY * 0.1; // move camera along z-axis
-  
 }
 
 function animate() {
-
-    // target.x = ( 1 - mouse.x ) * 0.002;
-    // target.y = ( 1 - mouse.y ) * 0.002;
-  
-    // camera.rotation.x += 0.05 * ( target.y - camera.rotation.x );
-    // camera.rotation.y += 0.05 * ( target.x - camera.rotation.y );
-
     requestAnimationFrame( animate );
-    renderer.render( scene, camera );
-
+    controls.update();
+}
+function render() {
+    renderer.render(scene, camera);
 }
