@@ -7,6 +7,9 @@ let camera, scene, renderer;
 const mouse = new THREE.Vector2();
 const target = new THREE.Vector2();
 const windowHalf = new THREE.Vector2( window.innerWidth / 2, window.innerHeight / 2 );
+var mouseDown = false,
+mouseX = 0,
+mouseY = 0;
 
 init();
 animate();
@@ -25,7 +28,7 @@ function init() {
     document.body.appendChild( renderer.domElement );
 
     var loader = new GLTFLoader();
-    loader.load("../blender/manikin.glb", gltf => {
+    loader.load("../blender/source/rp_claudia_rigged_002_yup_a.glb", gltf => {
     scene.add( gltf.scene );
     // renderer.render(scene, camera);
     }, undefined, function ( error ) {
@@ -34,6 +37,15 @@ function init() {
     );
     
     document.addEventListener( 'wheel', onMouseWheel, false );
+    document.addEventListener('mousemove', function (e) {
+        onMouseMove(e);
+    }, false);
+    document.addEventListener('mousedown', function (e) {
+        onMouseDown(e);
+    }, false);
+    document.addEventListener('mouseup', function (e) {
+        onMouseUp(e);
+    }, false);
     
 
     
@@ -69,6 +81,41 @@ function init() {
     //     document.getElementById('table').innerHTML +="<br>"
     // }
     
+  
+
+function onMouseMove(evt) {
+    if (!mouseDown) {
+        return;
+    }
+
+    evt.preventDefault();
+
+    var deltaX = evt.clientX - mouseX,
+        deltaY = evt.clientY - mouseY;
+    mouseX = evt.clientX;
+    mouseY = evt.clientY;
+    rotateScene(deltaX, deltaY);
+}
+
+function onMouseDown(evt) {
+    evt.preventDefault();
+
+    mouseDown = true;
+    mouseX = evt.clientX;
+    mouseY = evt.clientY;
+}
+
+function onMouseUp(evt) {
+    evt.preventDefault();
+
+    mouseDown = false;
+}
+
+
+function rotateScene(deltaX, deltaY) {
+    camera.rotation.y += deltaX / 100;
+    camera.rotation.x += deltaY / 100;
+}
 
 
 
@@ -80,11 +127,11 @@ function onMouseWheel( event ) {
 
 function animate() {
 
-    target.x = ( 1 - mouse.x ) * 0.002;
-    target.y = ( 1 - mouse.y ) * 0.002;
+    // target.x = ( 1 - mouse.x ) * 0.002;
+    // target.y = ( 1 - mouse.y ) * 0.002;
   
-    camera.rotation.x += 0.05 * ( target.y - camera.rotation.x );
-    camera.rotation.y += 0.05 * ( target.x - camera.rotation.y );
+    // camera.rotation.x += 0.05 * ( target.y - camera.rotation.x );
+    // camera.rotation.y += 0.05 * ( target.x - camera.rotation.y );
 
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
