@@ -1,17 +1,25 @@
 import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
 import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
 import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/loaders/GLTFLoader.js';
+import {GUI} from "../../blender/dat.gui.module.d.js";
 
 let camera, scene, renderer, controls, stats;
 
 const mouse = new THREE.Vector2();
 const target = new THREE.Vector2();
 const windowHalf = new THREE.Vector2( window.innerWidth / 2, window.innerHeight / 2 );
+
+const additiveActions = {
+    time: { weight: 0 },
+    gaussian_filter: { weight: 0 }
+};
+const crossFadeControls = [];
 var mouseDown = false,
 mouseX = 0,
 mouseY = 0;
 
 init();
+animate();
 render();
 
 function init() {
@@ -31,7 +39,6 @@ function init() {
     document.body.appendChild( renderer.domElement );
 
    
-    
     var loader = new GLTFLoader();
     var lightA1 = new THREE.AmbientLight(0xFFFFFF, 1.5)
     scene.add(lightA1)
@@ -47,7 +54,7 @@ function init() {
     document.addEventListener( 'wheel', onMouseWheel, false );
     controls = new OrbitControls( camera, renderer.domElement );
     controls.addEventListener( 'change', render );
-    animate();
+    createPanel();
 
     
 }
@@ -82,7 +89,43 @@ function init() {
     //     document.getElementById('table').innerHTML +="<br>"
     // }
     
-  
+function createPanel() {
+
+        const panel = new GUI( { width: 310 } );
+        panel.domElement.id = 'gui';
+        document.getElementById("gui").style.marginTop = "56px";
+
+        const folder2 = panel.addFolder( 'Options' );
+        const settings = additiveActions["time"]
+
+        var panelSettings = {
+            'gaussian_filter': 0,
+            'time': 0
+        };
+        
+        folder2.add(panelSettings, "time", 0.0, 10.0, 1.0).listen().onChange( function ( weight ) { 
+            // setWeight( settings.action, weight );
+            settings.weight = weight;
+        });
+
+        folder2.add( panelSettings, 'gaussian_filter', 0.0, 1.5, 0.01 ).onChange( modifyTimeScale );
+        folder2.open();
+
+}
+
+function setWeight( action, weight ) {
+    console.log(weight)
+    // action.enabled = true;
+    // action.setEffectiveTimeScale( 1 );
+    // action.setEffectiveWeight( weight );
+
+}
+function modifyTimeScale( speed ) {
+    console.log(speed)
+    // mixer.timeScale = speed;
+
+}
+
 function onMouseWheel( event ) {
     camera.position.z += event.deltaY * 0.1; // move camera along z-axis
 }

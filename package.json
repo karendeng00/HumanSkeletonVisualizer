@@ -6,8 +6,10 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "@types/dat.gui": "^0.7.5",
     "bootstrap": "^4.5.2",
     "cookie-parser": "~1.4.4",
+    "dat.gui": "^0.7.7",
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
