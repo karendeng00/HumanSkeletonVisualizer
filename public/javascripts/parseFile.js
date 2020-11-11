@@ -22,8 +22,12 @@ function openFile() {
 }
 
 function parseData(result) {
-    var lines = result.split('\n').slice(0, 2);
-    for(var line = 0; line <= 1; line++){
+    var lines = result.split('\n');
+    for(var line = 0; line < lines.length; line++){
+        if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
+            continue;
+        }
+
         var dict = new Object();
         var arr = lines[line].split(' ')
         var acc = new Object();
