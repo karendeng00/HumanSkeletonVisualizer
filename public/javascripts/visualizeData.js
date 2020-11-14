@@ -99,28 +99,15 @@ function init() {
 // const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 
 function getRaw() { //uses parseFile.js to create raw_data
-    var raw_data = JSON.parse(localStorage.getItem('data'));
+    var raw_data = localStorage.getItem('file');
+    console.log(raw_data)
     var acc_data = ["RKN^", "HIP", "LUA^", "RUA_", "LH", "BACK", "RKN_", "RWR", "RUA^", "LUA_", "LWR", "RH"];
     var inertial_data = ["BACK", "RUA", "RLA", "LUA", "LLA"];
     var inertial_data_xyz = ["acc", "gyro", "magnetic", "quaternion"];
     var shoe_data = ["LSHOE", "RSHOE"];
     var shoe_data_xyz = ["Eu", "Nav", "Body", "AngVelBodyFrame", "AngVelNavFrame", "Compass"];
 
-    for(var i = 0; i < raw_data.length; i++) {
-        document.getElementById('table').innerHTML += "time: " + raw_data[i]["time"] + "<br>";
-        document.getElementById('table').innerHTML += "acc:" + "<br>";
-        for(var j = 0; j < acc_data.length; j += 1) {
-            document.getElementById('table').innerHTML += [acc_data[j]] + ": " + raw_data[i]["acc"][acc_data[j]] + "<br>";
-        }
-        document.getElementById('table').innerHTML += "inertial:" + "<br>"
-        for(var j = 0; j < inertial_data.length; j++) {
-            document.getElementById('table').innerHTML += [inertial_data[j]] + ": " + "<br>";
-            for(var k = 0; k < inertial_data_xyz.length; k++) {
-                document.getElementById('table').innerHTML += [inertial_data_xyz[k]] + ": " + raw_data[i]["inertial"][inertial_data[j]][inertial_data_xyz[k]] + "<br>"
-            }
-        }
-        document.getElementById('table').innerHTML +="<br>"
-    }
+   
 } //NOTE: all values are currently strings, not integers
 
 function fuseData() {

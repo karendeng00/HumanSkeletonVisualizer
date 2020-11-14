@@ -17,16 +17,18 @@ function openFile() {
         var result = fr.result;
         document.getElementById('output') 
                 .innerHTML="done"; 
-        parseData(result);
+        localStorage["file"] = result;
+        // parseData(result);
     }
 }
 
 function parseData(result) {
     var lines = result.split('\n');
-    for(var line = 0; line < lines.length; line++){
-        if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
-            continue;
-        }
+    var res = []
+    for(var line = 0; line < 1000; line++){
+        // if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
+        //     continue;
+        // }
 
         var dict = new Object();
         var arr = lines[line].split(' ')
@@ -115,9 +117,12 @@ function parseData(result) {
             "furniture_acc": furniture_acc,
             "location": location
         }
-        lines[line] = dict;
+        res[line] = dict;
     }
-    
-    localStorage.setItem('data', JSON.stringify(lines));
+    console.log("hello")
+    console.log(res)
+    localStorage.clear()
+    // localStorage.setItem('other', JSON.stringify(res));
+    localStorage.setItem('data', JSON.stringify(res));
     window.location.href = "../visualize";
 }
