@@ -119,10 +119,38 @@ function parseData(result) {
         }
         res[line] = dict;
     }
-    console.log("hello")
-    console.log(res)
-    localStorage.clear()
-    // localStorage.setItem('other', JSON.stringify(res));
-    localStorage.setItem('data', JSON.stringify(res));
+    
+    // localStorage.setItem('data', JSON.stringify(lines));
+    //initialize indexedDB
+    window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+    if (!window.indexedDB) {
+        console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
+    }
+    var db;
+    var request = window.indexedDB.open("HAR"); //opens a database called HAR using version 1
+    
+    request.onerror = function(event) {
+        console.log("Could not open database")
+    };
+    request.onupgradeneeded = function(event) { //creates database if it doesn't already exist
+        db = event.target.result;
+        if (event.oldVersion < 1) {
+            var store = db.createObjectStore("SensorData", {keyPath: "time"}); //objectStore = collection
+            store.createIndex("acc_data", "acc_data", {unique: false}); 
+            store.createIndex("inertial_data", "inertial_data", {unique: false});
+            store.createIndex("shoe_data", "shoe_data", {unique: false})
+            
+            objectStore.transaction.oncomplete = function(event) { //store values in object store
+                var customerObjectStore = db.transaction("SensorData", "readwrite").objectStore("SensorData");
+                'data'.forEach(function(SensorData) {
+                    //store.add(SensorData);
+                });
+            };
+        }
+      };
+    // request.onsuccess = function(event) {
+    // db = event.target.result;
+    // };
+
     window.location.href = "../visualize";
 }
