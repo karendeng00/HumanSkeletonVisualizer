@@ -83,7 +83,7 @@ function FusionVectorFastNormalise(vector)
   return FusionVectorMultiplyScalar(vector, normReciprocal);
 }
 
-function FusionAhrsGetQuaternion(vector) {
+export function FusionAhrsGetQuaternion(vector) {
   return FusionQuaternionConjugate(vector.quaternion);
 }
 

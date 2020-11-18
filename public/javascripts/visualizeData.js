@@ -120,7 +120,7 @@ function getRaw() { //uses parseFile.js to create raw_data
     // }
 } //NOTE: all values are currently strings, not integers
 
-function fuseData() {
+async function fuseData() {
     var raw_data = JSON.parse(localStorage.getItem('data'));
 
     var acc_data = ["RKN^", "HIP", "LUA^", "RUA_", "LH", "BACK", "RKN_", "RWR", "RUA^", "LUA_", "LWR", "RH"];
@@ -136,45 +136,51 @@ function fuseData() {
     var gyro = {"axis":{"x":0,"y":0,"z":0}};
     var accelerometer = {"axis":{"x":0,"y":0,"z":0}};
     var magnetometer = {"axis":{"x":0,"y":0,"z":0}};
+    var quaternion = []
     var deltaT = 0  
     var prevTime = 0
-    for(var i = 0; i < 1000; i++) {
-        console.log(raw_data[i])
-        var g = async() => { 
-            var res = []
-            res.push(await raw_data[i]["inertial"]); 
-            res.push(await raw_data[i]);
-            return res;
-        }
-        g().then(data => console.log(data));
+    for(var i = 0; i < 1; i++) {
+        var data = await raw_data[i]["inertial"]; 
+        var t = raw_data[i]["time"];
         
-        // g().then(data => gyro.axis.x = parseInt(data[0]["RUA"].gyro[0]))
-        // g().then(data => gyro.axis.y = parseInt(data["RUA"].gyro[1]));
-        // g().then(data => gyro.axis.z = parseInt(data["RUA"].gyro[2]));
+        // gyro.axis.x = parseInt(data["RUA"].gyro[0]);
+        // gyro.axis.y = parseInt(data["RUA"].gyro[1]);
+        // gyro.axis.z = parseInt(data["RUA"].gyro[2]);
+        
+        // accelerometer.axis.x = parseInt(data["RUA"].acc[0])
+        // accelerometer.axis.y = parseInt(data["RUA"].acc[1])
+        // accelerometer.axis.z = parseInt(data["RUA"].acc[2])
+        
+        // magnetometer.axis.x = parseInt(data["RUA"].magnetic[0]);
+        // magnetometer.axis.y = parseInt(data["RUA"].magnetic[1]);
+        // magnetometer.axis.z = parseInt(data["RUA"].magnetic[2]);     
+        console.log(data["RUA"].quaternion)
+        var q0 = parseInt(data["RUA"].quaternion[0]);
+        var q1 = parseInt(data["RUA"].quaternion[1]);
+        var q2 = parseInt(data["RUA"].quaternion[2]);
+        var q3 = parseInt(data["RUA"].quaternion[3]);
 
-        
-        // g().then(data => accelerometer.axis.x = parseInt(data["RUA"].acc[0]))
-        // g().then(data => accelerometer.axis.y = parseInt(data["RUA"].acc[1]))
-        // g().then(data => accelerometer.axis.z = parseInt(data["RUA"].acc[2]))
-        
-        // g().then(data => magnetometer.axis.x = parseInt(data["RUA"].magnetic[0]));
-        // g().then(data => magnetometer.axis.y = parseInt(data["RUA"].magnetic[1]));
-        // g().then(data => magnetometer.axis.z = parseInt(data["RUA"].magnetic[2]));
-    
-        // g().then(data => deltaT = t)
+        console.log(2 * (q0 * q2 - q3 * q1))
+
+        var Rx = Math.atan2(2 * (q0 * q1 + q2 * q3), 1 - (2 * (q1 * q1 + q2 * q2)))
+        var Ry = Math.asin(2 * (q0 * q2 - q3 * q1));
+        var Rz = Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - (2  * (q2 * q2 + q3 * q3)));
+      
+        var euler = [Rx, Ry, Rz]
+        console.log(euler)
+        // deltaT = t
 
         // if(i > 0) {
-        //     g().then(data => deltaT = deltaT - prevTime);
+        //     deltaT = deltaT - prevTime;
         // }
 
-        // g().then(data => prevTime = t)
-        // g().then(data => console.log(t))
-        // g.then(FUSION.FusionAhrsUpdate(fusionAhrs, gyro, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
-        //     // FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(FUSION.FusionAhrsGetQuaternion(fusionAhrs);
-        //     console.log(eulerAngles.angle.roll, eulerAngles.angle.pitch, eulerAngles.angle.yaw))
+        // prevTime = t;
+        // console.log(qte(quaternion))
+        // FUSION_AHRS.FusionAhrsUpdate(fusionAhrs, gyro, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
+        // var eulerAngles = COMPRESSED_FUSION.FusionQuaternionToEulerAngles(FUSION.FusionAhrsGetQuaternion(fusionAhrs));
+        // console.log(eulerAngles.angle.roll, eulerAngles.angle.pitch, eulerAngles.angle.yaw);
     }
 }
-
 
 //creates options panel
 function createPanel() {
