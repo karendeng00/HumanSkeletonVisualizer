@@ -9,6 +9,7 @@ import * as PARSE_FILE from "./parseFile.js"
 
 let camera, scene, renderer, controls, stats;
 let BACK, RUA, RLA, LUA, LLA, LLR;
+var quaternion_frames = [];
 
 const mouse = new THREE.Vector2();
 const target = new THREE.Vector2();
@@ -60,8 +61,6 @@ function init() {
         // var center = new THREE.Vector3();
         // box.getCenter( center );
         // obj.position.sub( center );
-        
-        var fileAnimations = gltf.animations; //initializes animations
 
         model.traverse(obj => { //sets bones to variables 
             if (obj.isBone) { 
@@ -128,7 +127,6 @@ function fuseData() {
     var inertial_data_xyz = ["acc", "gyro", "magnetic", "quaternion"];
     var shoe_data = ["LSHOE", "RSHOE"];
     var shoe_data_xyz = ["Eu", "Nav", "Body", "AngVelBodyFrame", "AngVelNavFrame", "Compass"];
-    console.log(raw_data)
 
     //initialize sensor fusion variables
      //going to need to do this with every bone... figure out best way to do this
@@ -154,14 +152,12 @@ function fuseData() {
                 deltaT = deltaT - data[i-1]["time"];
             }
             //fuses sensor data by updating fusionAhrs
-            FUSION.FusionAhrsUpdate(fusionAhrs, gyroscope, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
-            // FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(
-            FUSION.FusionAhrsGetQuaternion(fusionAhrs);
-            console.log(eulerAngles.angle.roll, eulerAngles.angle.pitch, eulerAngles.angle.yaw)
-        
+            FUSION.FusionAhrsUpdate(fusionAhrs, gyroscope, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?  
+            quaternion_frames.push(fusionAhrs.quaternion); //appends quaternion to vector
         } 
 
     }
+    console.log(quaternion_frames.length);
 }
 
 
@@ -208,7 +204,17 @@ function onMouseWheel( event ) {
 }
 
 function animate() {
+    //Need to find a way to not animate until quaternion_frames is done loading
+
     requestAnimationFrame( animate );
+    for(var i = 0; i < quaternion_frames.length; i++) {
+        if(RUA.quaternion != quaternion_frames[i]) {
+            RUA.quaternion.rotateTowards(quaternion_frames[i], 33); //note: figure out how to convert steps to ms
+            //RUA.quaternion.slerp(quaternion_frames[i], 0.01); //this interpolates to quaternion (could be used for Gaussian filter?) more interpolation if increase 0.01
+        } 
+
+        renderer.render( scene, camera );
+    }
     controls.update();
 }
 function render() {
