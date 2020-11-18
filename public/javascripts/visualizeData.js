@@ -2,8 +2,10 @@ import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threej
 import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
 import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/loaders/GLTFLoader.js';
 import {GUI} from "../../blender/dat.gui.module.d.js";
-import {FusionAhrsUpdate} from "./SensorFusion/FusionAhrs.js";
-import {FusionVector3 } from "./SensorFusion/FusionTypes.js"
+import * as FUSION_AHRS from "./SensorFusion/FusionAhrs.js";
+import * as FUSION from "./SensorFusion/FusionTypes.js";
+import * as COMPRESSED_FUSION from "./SensorFusion/Compressed/Fusion.min.js"
+import * as PARSE_FILE from "./parseFile.js"
 
 let camera, scene, renderer, controls, stats;
 let BACK, RUA, RLA, LUA, LLA, LLR;
@@ -120,46 +122,48 @@ function getRaw() { //uses parseFile.js to create raw_data
 
 function fuseData() {
     var raw_data = JSON.parse(localStorage.getItem('data'));
+
     var acc_data = ["RKN^", "HIP", "LUA^", "RUA_", "LH", "BACK", "RKN_", "RWR", "RUA^", "LUA_", "LWR", "RH"];
     var inertial_data = ["BACK", "RUA", "RLA", "LUA", "LLA"];
     var inertial_data_xyz = ["acc", "gyro", "magnetic", "quaternion"];
     var shoe_data = ["LSHOE", "RSHOE"];
     var shoe_data_xyz = ["Eu", "Nav", "Body", "AngVelBodyFrame", "AngVelNavFrame", "Compass"];
-
+    console.log(raw_data)
 
     //initialize sensor fusion variables
      //going to need to do this with every bone... figure out best way to do this
-    var fusionAhrs = new FusionAhrs();
-    var gyro = new FusionVector3();
-    var accelerometer = new FusionVector3();
-    var magnetometer = new FusionVector3();
+    var fusionAhrs = {"gain":0,"minMagneticFieldSquared":0,"maxMagneticFieldSquared":0,"quaternion":{"element":{"w":0,"x":0,"y":0,"z":0}},"linearAcceleration":{"axis":{"x":0,"y":0,"z":0}},"rampedGain":0};
+    var gyro = {"axis":{"x":0,"y":0,"z":0}};
+    var accelerometer = {"axis":{"x":0,"y":0,"z":0}};
+    var magnetometer = {"axis":{"x":0,"y":0,"z":0}};
 
-    for(var i = 0; i < raw_data.length; i++) {
-        g = raw_data[i]["intertial"]["RUA"]["gryo"];
-        gyro.axis.x = parseInt(g[0]) + "<br>";
-        gryo.axis.y = parseInt(g[1]) + "<br>";
-        gryo.axis.z = parseInt(g[2]) + "<br>";
+    for(var i = 0; i < 1000; i++) {
+        var g = async() => { 
+            var data = await raw_data[i]["inertial"]; 
+            gyro.axis.x = parseInt(data["RUA"].gyro[0]);
+            gyro.axis.y = parseInt(data["RUA"].gyro[1]);
+            gyro.axis.z = parseInt(data["RUA"].gyro[2])
+            accelerometer.axis.x = parseInt(data["RUA"].acc[0])
+            accelerometer.axis.y = parseInt(data["RUA"].acc[1])
+            accelerometer.axis.z = parseInt(data["RUA"].acc[2])
+            magnetometer.axis.x = parseInt(data["RUA"].magnetic[0])
+            magnetometer.axis.y = parseInt(data["RUA"].magnetic[1])
+            magnetometer.axis.z = parseInt(data["RUA"].magnetic[2])
+            var deltaT = data[i]["time"]; //gets time change
+            if(i > 0) {
+                deltaT = deltaT - data[i-1]["time"];
+            }
+            //fuses sensor data by updating fusionAhrs
+            FUSION.FusionAhrsUpdate(fusionAhrs, gyroscope, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
+            // FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(
+            FUSION.FusionAhrsGetQuaternion(fusionAhrs);
+            console.log(eulerAngles.angle.roll, eulerAngles.angle.pitch, eulerAngles.angle.yaw)
+        
+        } 
 
-        a = raw_data[i]["intertial"]["RUA"]["acc"];
-        accelerometer.axis.x = parseInt(a[0]) + "<br>";
-        accelerometer.axis.y = parseInt(a[1]) + "<br>";
-        accelerometer.axis.z = parseInt(a[2]) + "<br>";
-
-        m = raw_data[i]["intertial"]["RUA"]["magnetic"];
-        magnetometer.axis.x = parseInt(m[0]) + "<br>";
-        magnetometer.axis.y = parseInt(m[1]) + "<br>";
-        magnetometer.axis.z = parseInt(m[2]) + "<br>";
-
-        var deltaT = data[i]["time"]; //gets time change
-        if(i > 0) {
-            deltaT = deltaT - data[i-1]["time"];
-        }
-
-        //fuses sensor data by updating fusionAhrs
-        FusionAhrsUpdate(fusionAhrs, gyroscope, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
-        // FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(FusionAhrsGetQuaternion(fusionAhrs));
     }
 }
+
 
 //creates options panel
 function createPanel() {

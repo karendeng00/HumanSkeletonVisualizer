@@ -1,4 +1,4 @@
-
+var res = []
 
 function submitButton() {
     openFile()
@@ -23,7 +23,7 @@ function openFile() {
 
 function parseData(result) {
     var lines = result.split('\n');
-    var res = []
+    
     window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
     if (!window.indexedDB) {
         console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
@@ -47,7 +47,7 @@ function parseData(result) {
         }
     };
 
-    for(var line = 0; line < lines.length; line++){
+    for(var line = 0; line < 1000; line++){
         // if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
         //     continue;
         // }
@@ -102,7 +102,7 @@ function parseData(result) {
                 }
             }
             inertial[shoe_data[counter]] = temp
-            counter++
+            counter++   
         }
         // counter = 0
         // for(var i = 134; i <= 193; i += 5) {
@@ -150,6 +150,8 @@ function parseData(result) {
     // request.onsuccess = function(event) {
     // db = event.target.result;
     // };
+    console.log(res)
+    localStorage.setItem('file', JSON.stringify(res));
     
     window.location.href = "../visualize";
    

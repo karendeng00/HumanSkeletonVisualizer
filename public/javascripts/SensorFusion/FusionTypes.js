@@ -83,6 +83,10 @@ function FusionVectorFastNormalise(vector)
   return FusionVectorMultiplyScalar(vector, normReciprocal);
 }
 
+function FusionAhrsGetQuaternion(vector) {
+  return FusionQuaternionConjugate(vector.quaternion);
+}
+
 function FusionVectorMagnitude(vector)
 {
   var V = vector.axis;
