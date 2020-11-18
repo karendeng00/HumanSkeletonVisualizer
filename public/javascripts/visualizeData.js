@@ -52,6 +52,7 @@ fuseData();
 animate();
 render();
 
+
 function init() {
 
     camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 500 );
@@ -137,7 +138,6 @@ async function fuseData() {
             var data = await raw_data[i]["inertial"]; 
             var t = raw_data[i]["time"];
                
-            console.log(data[inertial_test[j]].quaternion)
             var q0 = parseInt(data[inertial_test[j]].quaternion[0]) / 1000;
             var q1 = parseInt(data[inertial_test[j]].quaternion[1]) / 1000;
             var q2 = parseInt(data[inertial_test[j]].quaternion[2]) / 1000;
@@ -148,8 +148,9 @@ async function fuseData() {
             euler[i][inertial_test[j]].z  = Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - (2  * (q2 * q2 + q3 * q3)));
             
         }
+        console.log(euler[i])
     }
-    console.log(euler)
+    
 
  }
 
@@ -168,23 +169,25 @@ function createPanel() {
             'time': 0
         };
         
-        folder2.add(panelSettings, "time", 0.0, 1000.0, 1.0).onChange( setWeight);
+        folder2.add(panelSettings, "time", 0.0, 1000.0, 1.0).onChange( function ( time ) { 
+            // setWeight( settings.action, weight );
+            weight = time;
+        });
 
-        folder2.add( panelSettings, 'gaussian_filter', 0.0, 1.5, 0.01 ).onChange( modifyTimeScale );
+        folder2.add( panelSettings, 'gaussian_filter', 0.0, 1.5, 0.01).onChange( modifyTimeScale );
         folder2.open();
 
 }
 
-function setWeight(weight ) {
-    console.log(weight)
-    this.weight = weight
-    animate()
+// function setWeight(weight ) {
+//     console.log(weight)
+//     this.weight = weight
+//     animate()
 
-}
+// }
 function modifyTimeScale( speed ) {
     console.log(speed)
     // mixer.timeScale = speed;
-
 }
 
 function onMouseWheel( event ) {
@@ -192,7 +195,7 @@ function onMouseWheel( event ) {
 }
 
 function animate() {
-    
+    console.log(weight)
     requestAnimationFrame( animate );
     if(RUA) {
         RUA.rotation.x = euler[weight]["RUA"].x 
@@ -200,9 +203,9 @@ function animate() {
         RUA.rotation.z = euler[weight]["RUA"].z 
     }
     if(RLA) {
-        RUA.rotation.x = euler[weight]["RLA"].x 
-        RUA.rotation.y = euler[weight]["RLA"].y
-        RUA.rotation.z = euler[weight]["RLA"].z 
+        RLA.rotation.x = euler[weight]["RLA"].x 
+        RLA.rotation.y = euler[weight]["RLA"].y
+        RLA.rotation.z = euler[weight]["RLA"].z 
     }
     
     if(LUA) {
@@ -216,6 +219,7 @@ function animate() {
         LLA.rotation.z = euler[weight]["LLA"].z 
     }
     controls.update();
+    
 }
 function render() {
     renderer.render(scene, camera);
