@@ -2,13 +2,37 @@ import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threej
 import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
 import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/loaders/GLTFLoader.js';
 import {GUI} from "../../blender/dat.gui.module.d.js";
-import * as FUSION_AHRS from "./SensorFusion/FusionAhrs.js";
-import * as FUSION from "./SensorFusion/FusionTypes.js";
-import * as COMPRESSED_FUSION from "./SensorFusion/Compressed/Fusion.min.js"
-import * as PARSE_FILE from "./parseFile.js"
 
 let camera, scene, renderer, controls, stats;
-let BACK, RUA, RLA, LUA, LLA, LLR;
+let BACK, RUA, RLA, LUA, LLA;
+
+var euler = []
+var weight = 0
+for(var i = 0; i < 1000; i++) {
+    var angles = {
+        "RUA": {
+            x: 0,
+            y: 0,
+            z: 0
+        },
+        "RLA": {
+            x: 0,
+            y: 0,
+            z: 0
+        },
+        "LUA": {
+            x: 0,
+            y: 0,
+            z: 0 
+        },
+        "LLA": {
+            x: 0,
+            y: 0,
+            z: 0 
+        }
+    }
+    euler.push(angles)
+}
 
 const mouse = new THREE.Vector2();
 const target = new THREE.Vector2();
@@ -72,11 +96,11 @@ function init() {
                     case "upperarm_r":
                         RUA = obj;
                         break;
-                    case "lowerarm_l":
+                    case "lowerarm_r":
                         RLA = obj;
                         break;
-                    case "lowerarm_r":
-                        LLR = obj;
+                    case "lowerarm_l":
+                        LLA = obj;
                         break;
                 }
             }
@@ -94,93 +118,40 @@ function init() {
     controls.addEventListener( 'change', render );
     createPanel();
 }
-// var scene = new THREE.Scene();
-// var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
 
-// const geometry = new THREE.BoxGeometry();
-// const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-
-function getRaw() { //uses parseFile.js to create raw_data
-   
-    // for(var i = 0; i < raw_data.length; i++) {
-    //     document.getElementById('table').innerHTML += "time: " + raw_data[i]["time"] + "<br>";
-    //     document.getElementById('table').innerHTML += "acc:" + "<br>";
-    //     for(var j = 0; j < acc_data.length; j += 1) {
-    //         document.getElementById('table').innerHTML += [acc_data[j]] + ": " + raw_data[i]["acc"][acc_data[j]] + "<br>";
-    //     }
-    //     document.getElementById('table').innerHTML += "inertial:" + "<br>"
-    //     for(var j = 0; j < inertial_data.length; j++) {
-    //         document.getElementById('table').innerHTML += [inertial_data[j]] + ": " + "<br>";
-    //         for(var k = 0; k < inertial_data_xyz.length; k++) {
-    //             document.getElementById('table').innerHTML += [inertial_data_xyz[k]] + ": " + raw_data[i]["inertial"][inertial_data[j]][inertial_data_xyz[k]] + "<br>"
-    //         }
-    //     }
-    //     document.getElementById('table').innerHTML +="<br>"
-    // }
-} //NOTE: all values are currently strings, not integers
 
 async function fuseData() {
     var raw_data = JSON.parse(localStorage.getItem('data'));
 
     var acc_data = ["RKN^", "HIP", "LUA^", "RUA_", "LH", "BACK", "RKN_", "RWR", "RUA^", "LUA_", "LWR", "RH"];
     var inertial_data = ["BACK", "RUA", "RLA", "LUA", "LLA"];
+    var inertial_test = ["RUA", "RLA", "LUA", "LLA"];
     var inertial_data_xyz = ["acc", "gyro", "magnetic", "quaternion"];
     var shoe_data = ["LSHOE", "RSHOE"];
     var shoe_data_xyz = ["Eu", "Nav", "Body", "AngVelBodyFrame", "AngVelNavFrame", "Compass"];
-    console.log(raw_data)
 
-    //initialize sensor fusion variables
-     //going to need to do this with every bone... figure out best way to do this
-    var fusionAhrs = {"gain":0,"minMagneticFieldSquared":0,"maxMagneticFieldSquared":0,"quaternion":{"element":{"w":0,"x":0,"y":0,"z":0}},"linearAcceleration":{"axis":{"x":0,"y":0,"z":0}},"rampedGain":0};
-    var gyro = {"axis":{"x":0,"y":0,"z":0}};
-    var accelerometer = {"axis":{"x":0,"y":0,"z":0}};
-    var magnetometer = {"axis":{"x":0,"y":0,"z":0}};
     var quaternion = []
-    var deltaT = 0  
-    var prevTime = 0
-    for(var i = 0; i < 1; i++) {
-        var data = await raw_data[i]["inertial"]; 
-        var t = raw_data[i]["time"];
-        
-        // gyro.axis.x = parseInt(data["RUA"].gyro[0]);
-        // gyro.axis.y = parseInt(data["RUA"].gyro[1]);
-        // gyro.axis.z = parseInt(data["RUA"].gyro[2]);
-        
-        // accelerometer.axis.x = parseInt(data["RUA"].acc[0])
-        // accelerometer.axis.y = parseInt(data["RUA"].acc[1])
-        // accelerometer.axis.z = parseInt(data["RUA"].acc[2])
-        
-        // magnetometer.axis.x = parseInt(data["RUA"].magnetic[0]);
-        // magnetometer.axis.y = parseInt(data["RUA"].magnetic[1]);
-        // magnetometer.axis.z = parseInt(data["RUA"].magnetic[2]);     
-        console.log(data["RUA"].quaternion)
-        var q0 = parseInt(data["RUA"].quaternion[0]);
-        var q1 = parseInt(data["RUA"].quaternion[1]);
-        var q2 = parseInt(data["RUA"].quaternion[2]);
-        var q3 = parseInt(data["RUA"].quaternion[3]);
+    for(var i = 0; i < 1000; i++) {
+        for(var j = 0; j < inertial_test.length; j++) {
+            var data = await raw_data[i]["inertial"]; 
+            var t = raw_data[i]["time"];
+               
+            console.log(data[inertial_test[j]].quaternion)
+            var q0 = parseInt(data[inertial_test[j]].quaternion[0]) / 1000;
+            var q1 = parseInt(data[inertial_test[j]].quaternion[1]) / 1000;
+            var q2 = parseInt(data[inertial_test[j]].quaternion[2]) / 1000;
+            var q3 = parseInt(data[inertial_test[j]].quaternion[3]) / 1000;
 
-        console.log(2 * (q0 * q2 - q3 * q1))
-
-        var Rx = Math.atan2(2 * (q0 * q1 + q2 * q3), 1 - (2 * (q1 * q1 + q2 * q2)))
-        var Ry = Math.asin(2 * (q0 * q2 - q3 * q1));
-        var Rz = Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - (2  * (q2 * q2 + q3 * q3)));
-      
-        var euler = [Rx, Ry, Rz]
-        console.log(euler)
-        // deltaT = t
-
-        // if(i > 0) {
-        //     deltaT = deltaT - prevTime;
-        // }
-
-        // prevTime = t;
-        // console.log(qte(quaternion))
-        // FUSION_AHRS.FusionAhrsUpdate(fusionAhrs, gyro, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
-        // var eulerAngles = COMPRESSED_FUSION.FusionQuaternionToEulerAngles(FUSION.FusionAhrsGetQuaternion(fusionAhrs));
-        // console.log(eulerAngles.angle.roll, eulerAngles.angle.pitch, eulerAngles.angle.yaw);
+            euler[i][inertial_test[j]].x  = Math.atan2(2 * (q0 * q1 + q2 * q3), 1 - (2 * (q1 * q1 + q2 * q2)))
+            euler[i][inertial_test[j]].y  = Math.asin(2 * (q0 * q2 - q3 * q1));
+            euler[i][inertial_test[j]].z  = Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - (2  * (q2 * q2 + q3 * q3)));
+            
+        }
     }
-}
+    console.log(euler)
+
+ }
 
 //creates options panel
 function createPanel() {
@@ -197,21 +168,17 @@ function createPanel() {
             'time': 0
         };
         
-        folder2.add(panelSettings, "time", 0.0, 10.0, 1.0).listen().onChange( function ( weight ) { 
-            // setWeight( settings.action, weight );
-            settings.weight = weight;
-        });
+        folder2.add(panelSettings, "time", 0.0, 1000.0, 1.0).onChange( setWeight);
 
         folder2.add( panelSettings, 'gaussian_filter', 0.0, 1.5, 0.01 ).onChange( modifyTimeScale );
         folder2.open();
 
 }
 
-function setWeight( action, weight ) {
+function setWeight(weight ) {
     console.log(weight)
-    // action.enabled = true;
-    // action.setEffectiveTimeScale( 1 );
-    // action.setEffectiveWeight( weight );
+    this.weight = weight
+    animate()
 
 }
 function modifyTimeScale( speed ) {
@@ -225,7 +192,29 @@ function onMouseWheel( event ) {
 }
 
 function animate() {
+    
     requestAnimationFrame( animate );
+    if(RUA) {
+        RUA.rotation.x = euler[weight]["RUA"].x 
+        RUA.rotation.y = euler[weight]["RUA"].y
+        RUA.rotation.z = euler[weight]["RUA"].z 
+    }
+    if(RLA) {
+        RUA.rotation.x = euler[weight]["RLA"].x 
+        RUA.rotation.y = euler[weight]["RLA"].y
+        RUA.rotation.z = euler[weight]["RLA"].z 
+    }
+    
+    if(LUA) {
+        LUA.rotation.x = euler[weight]["LUA"].x 
+        LUA.rotation.y = euler[weight]["LUA"].y
+        LUA.rotation.z = euler[weight]["LUA"].z 
+    }
+    if(LLA) {
+        LLA.rotation.x = euler[weight]["LLA"].x 
+        LLA.rotation.y = euler[weight]["LLA"].y
+        LLA.rotation.z = euler[weight]["LLA"].z 
+    }
     controls.update();
 }
 function render() {
