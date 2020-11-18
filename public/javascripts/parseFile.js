@@ -16,16 +16,38 @@ function openFile() {
     fr.onload=function(){ 
         var result = fr.result;
         document.getElementById('output') 
-                .innerHTML="done"; 
-        localStorage["file"] = result;
-        // parseData(result);
+                .innerHTML="done";
+        parseData(result);
     }
 }
 
 function parseData(result) {
     var lines = result.split('\n');
     var res = []
-    for(var line = 0; line < 1000; line++){
+    window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+    if (!window.indexedDB) {
+        console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
+    }
+    var db;
+    var request = window.indexedDB.open("HAR"); //opens a database called HAR using version 1
+    
+    request.onerror = function(event) {
+        console.log("Could not open database")
+    };
+
+    request.onupgradeneeded = function(event) { //creates database if it doesn't already exist
+        db = event.target.result;
+        if (event.oldVersion < 1) {
+            var store = db.createObjectStore("SensorData", {keyPath: "time"}); //objectStore = collection
+            store.createIndex("acc_data", "acc_data", {unique: false}); 
+            store.createIndex("inertial_data", "inertial_data", {unique: false});
+            store.createIndex("shoe_data", "shoe_data", {unique: false})
+            
+            
+        }
+    };
+
+    for(var line = 0; line < lines.length; line++){
         // if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
         //     continue;
         // }
@@ -82,75 +104,53 @@ function parseData(result) {
             inertial[shoe_data[counter]] = temp
             counter++
         }
-        counter = 0
-        for(var i = 134; i <= 193; i += 5) {
-            var temp = new Object()
-            temp["acc"] = arr.slice(i, i + 3)
-            temp["gyro"] = arr.slice(i + 3, i + 5);
-            food[food_data[counter]] = temp
-            counter++
-        }
+        // counter = 0
+        // for(var i = 134; i <= 193; i += 5) {
+        //     var temp = new Object()
+        //     temp["acc"] = arr.slice(i, i + 3)
+        //     temp["gyro"] = arr.slice(i + 3, i + 5);
+        //     food[food_data[counter]] = temp
+        //     counter++
+        // }
         
-        counter = 0
-        for(var i = 194; i <= 206; i++) {
-            furniture_reed[furniture_reed_data[counter]] = arr.slice(i, i+1)
-            counter++
-        }
+        // counter = 0
+        // for(var i = 194; i <= 206; i++) {
+        //     furniture_reed[furniture_reed_data[counter]] = arr.slice(i, i+1)
+        //     counter++
+        // }
 
-        counter = 0
-        for(var i = 207; i <= 230; i+=3) {
-            furniture_acc[furniture_acc_data[counter]] = arr.slice(i, i+3)
-            counter++
-        } 
+        // counter = 0
+        // for(var i = 207; i <= 230; i+=3) {
+        //     furniture_acc[furniture_acc_data[counter]] = arr.slice(i, i+3)
+        //     counter++
+        // } 
         
-        counter = 0 
-        for(var i = 231; i <= 242; i += 3) {
-            location[location_data[counter]] = arr.slice(i, i+3)
-            counter++
-        }
+        // counter = 0 
+        // for(var i = 231; i <= 242; i += 3) {
+        //     location[location_data[counter]] = arr.slice(i, i+3)
+        //     counter++
+        // }
         dict = {
             "time": arr[0],
             "acc": acc,
             "inertial": inertial,
-            "food": food,
-            "furniture_reed": furniture_reed,
-            "furniture_acc": furniture_acc,
-            "location": location
+            // "food": food,
+            // "furniture_reed": furniture_reed,
+            // "furniture_acc": furniture_acc,
+            // "location": location
         }
         res[line] = dict;
     }
+    console.log(res)
     
     // localStorage.setItem('data', JSON.stringify(lines));
     //initialize indexedDB
-    window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-    if (!window.indexedDB) {
-        console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
-    }
-    var db;
-    var request = window.indexedDB.open("HAR"); //opens a database called HAR using version 1
     
-    request.onerror = function(event) {
-        console.log("Could not open database")
-    };
-    request.onupgradeneeded = function(event) { //creates database if it doesn't already exist
-        db = event.target.result;
-        if (event.oldVersion < 1) {
-            var store = db.createObjectStore("SensorData", {keyPath: "time"}); //objectStore = collection
-            store.createIndex("acc_data", "acc_data", {unique: false}); 
-            store.createIndex("inertial_data", "inertial_data", {unique: false});
-            store.createIndex("shoe_data", "shoe_data", {unique: false})
-            
-            objectStore.transaction.oncomplete = function(event) { //store values in object store
-                var customerObjectStore = db.transaction("SensorData", "readwrite").objectStore("SensorData");
-                'data'.forEach(function(SensorData) {
-                    //store.add(SensorData);
-                });
-            };
-        }
-      };
+   
     // request.onsuccess = function(event) {
     // db = event.target.result;
     // };
-
+    
     window.location.href = "../visualize";
+   
 }

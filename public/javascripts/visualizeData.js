@@ -3,9 +3,10 @@ import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/t
 import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/loaders/GLTFLoader.js';
 import {GUI} from "../../blender/dat.gui.module.d.js";
 import {FusionAhrsUpdate} from "./SensorFusion/FusionAhrs.js";
+import {FusionVector3 } from "./SensorFusion/FusionTypes.js"
 
 let camera, scene, renderer, controls, stats;
-let BACK, RUA, RLA, LUA, LLA;
+let BACK, RUA, RLA, LUA, LLA, LLR;
 
 const mouse = new THREE.Vector2();
 const target = new THREE.Vector2();
@@ -21,7 +22,7 @@ mouseX = 0,
 mouseY = 0;
 
 init();
-getRaw();
+fuseData();
 animate();
 render();
 
@@ -99,26 +100,39 @@ function init() {
 // const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 
 function getRaw() { //uses parseFile.js to create raw_data
-    var raw_data = localStorage.getItem('file');
-    console.log(raw_data)
+   
+    // for(var i = 0; i < raw_data.length; i++) {
+    //     document.getElementById('table').innerHTML += "time: " + raw_data[i]["time"] + "<br>";
+    //     document.getElementById('table').innerHTML += "acc:" + "<br>";
+    //     for(var j = 0; j < acc_data.length; j += 1) {
+    //         document.getElementById('table').innerHTML += [acc_data[j]] + ": " + raw_data[i]["acc"][acc_data[j]] + "<br>";
+    //     }
+    //     document.getElementById('table').innerHTML += "inertial:" + "<br>"
+    //     for(var j = 0; j < inertial_data.length; j++) {
+    //         document.getElementById('table').innerHTML += [inertial_data[j]] + ": " + "<br>";
+    //         for(var k = 0; k < inertial_data_xyz.length; k++) {
+    //             document.getElementById('table').innerHTML += [inertial_data_xyz[k]] + ": " + raw_data[i]["inertial"][inertial_data[j]][inertial_data_xyz[k]] + "<br>"
+    //         }
+    //     }
+    //     document.getElementById('table').innerHTML +="<br>"
+    // }
+} //NOTE: all values are currently strings, not integers
+
+function fuseData() {
+    var raw_data = JSON.parse(localStorage.getItem('data'));
     var acc_data = ["RKN^", "HIP", "LUA^", "RUA_", "LH", "BACK", "RKN_", "RWR", "RUA^", "LUA_", "LWR", "RH"];
     var inertial_data = ["BACK", "RUA", "RLA", "LUA", "LLA"];
     var inertial_data_xyz = ["acc", "gyro", "magnetic", "quaternion"];
     var shoe_data = ["LSHOE", "RSHOE"];
     var shoe_data_xyz = ["Eu", "Nav", "Body", "AngVelBodyFrame", "AngVelNavFrame", "Compass"];
 
-   
-} //NOTE: all values are currently strings, not integers
-
-function fuseData() {
-    getRaw();
 
     //initialize sensor fusion variables
      //going to need to do this with every bone... figure out best way to do this
-    var fusionAhrs = clone(FusionAhrs);
-    var gyro = clone(FusionVector3);
-    var accelerometer = clone(FusionVector3);
-    var magnetometer = clone(FusionVector3);
+    var fusionAhrs = new FusionAhrs();
+    var gyro = new FusionVector3();
+    var accelerometer = new FusionVector3();
+    var magnetometer = new FusionVector3();
 
     for(var i = 0; i < raw_data.length; i++) {
         g = raw_data[i]["intertial"]["RUA"]["gryo"];
@@ -143,6 +157,7 @@ function fuseData() {
 
         //fuses sensor data by updating fusionAhrs
         FusionAhrsUpdate(fusionAhrs, gyroscope, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
+        // FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(FusionAhrsGetQuaternion(fusionAhrs));
     }
 }
 
