@@ -136,31 +136,42 @@ function fuseData() {
     var gyro = {"axis":{"x":0,"y":0,"z":0}};
     var accelerometer = {"axis":{"x":0,"y":0,"z":0}};
     var magnetometer = {"axis":{"x":0,"y":0,"z":0}};
-
+    var deltaT = 0  
+    var prevTime = 0
     for(var i = 0; i < 1000; i++) {
+        console.log(raw_data[i])
         var g = async() => { 
-            var data = await raw_data[i]["inertial"]; 
-            gyro.axis.x = parseInt(data["RUA"].gyro[0]);
-            gyro.axis.y = parseInt(data["RUA"].gyro[1]);
-            gyro.axis.z = parseInt(data["RUA"].gyro[2])
-            accelerometer.axis.x = parseInt(data["RUA"].acc[0])
-            accelerometer.axis.y = parseInt(data["RUA"].acc[1])
-            accelerometer.axis.z = parseInt(data["RUA"].acc[2])
-            magnetometer.axis.x = parseInt(data["RUA"].magnetic[0])
-            magnetometer.axis.y = parseInt(data["RUA"].magnetic[1])
-            magnetometer.axis.z = parseInt(data["RUA"].magnetic[2])
-            var deltaT = data[i]["time"]; //gets time change
-            if(i > 0) {
-                deltaT = deltaT - data[i-1]["time"];
-            }
-            //fuses sensor data by updating fusionAhrs
-            FUSION.FusionAhrsUpdate(fusionAhrs, gyroscope, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
-            // FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(
-            FUSION.FusionAhrsGetQuaternion(fusionAhrs);
-            console.log(eulerAngles.angle.roll, eulerAngles.angle.pitch, eulerAngles.angle.yaw)
+            var res = []
+            res.push(await raw_data[i]["inertial"]); 
+            res.push(await raw_data[i]);
+            return res;
+        }
+        g().then(data => console.log(data));
         
-        } 
+        // g().then(data => gyro.axis.x = parseInt(data[0]["RUA"].gyro[0]))
+        // g().then(data => gyro.axis.y = parseInt(data["RUA"].gyro[1]));
+        // g().then(data => gyro.axis.z = parseInt(data["RUA"].gyro[2]));
 
+        
+        // g().then(data => accelerometer.axis.x = parseInt(data["RUA"].acc[0]))
+        // g().then(data => accelerometer.axis.y = parseInt(data["RUA"].acc[1]))
+        // g().then(data => accelerometer.axis.z = parseInt(data["RUA"].acc[2]))
+        
+        // g().then(data => magnetometer.axis.x = parseInt(data["RUA"].magnetic[0]));
+        // g().then(data => magnetometer.axis.y = parseInt(data["RUA"].magnetic[1]));
+        // g().then(data => magnetometer.axis.z = parseInt(data["RUA"].magnetic[2]));
+    
+        // g().then(data => deltaT = t)
+
+        // if(i > 0) {
+        //     g().then(data => deltaT = deltaT - prevTime);
+        // }
+
+        // g().then(data => prevTime = t)
+        // g().then(data => console.log(t))
+        // g.then(FUSION.FusionAhrsUpdate(fusionAhrs, gyro, accelerometer, magnetometer, deltaT); //variation is available if not all 3 sensors. Make this a UI option in future?
+        //     // FusionEulerAngles eulerAngles = FusionQuaternionToEulerAngles(FUSION.FusionAhrsGetQuaternion(fusionAhrs);
+        //     console.log(eulerAngles.angle.roll, eulerAngles.angle.pitch, eulerAngles.angle.yaw))
     }
 }
 

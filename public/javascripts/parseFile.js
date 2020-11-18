@@ -141,7 +141,6 @@ function parseData(result) {
         }
         res[line] = dict;
     }
-    console.log(res)
     
     // localStorage.setItem('data', JSON.stringify(lines));
     //initialize indexedDB
@@ -150,7 +149,6 @@ function parseData(result) {
     // request.onsuccess = function(event) {
     // db = event.target.result;
     // };
-    console.log(res)
     localStorage.setItem('file', JSON.stringify(res));
     
     window.location.href = "../visualize";
