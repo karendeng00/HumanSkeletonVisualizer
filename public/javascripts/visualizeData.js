@@ -34,6 +34,25 @@ for(var i = 0; i < 1000; i++) {
     euler.push(angles)
 }
 
+var quat = []
+for(var i = 0; i < 1000; i++) {
+    var angles = {
+        "RUA": {
+            quat: new THREE.Quaternion()
+        },
+        "RLA": {
+            quat: new THREE.Quaternion()
+        },
+        "LUA": {
+            quat: new THREE.Quaternion()
+        },
+        "LLA": {
+            quat: new THREE.Quaternion()
+        }
+    }
+    quat.push(angles)
+}
+
 const mouse = new THREE.Vector2();
 const target = new THREE.Vector2();
 const windowHalf = new THREE.Vector2( window.innerWidth / 2, window.innerHeight / 2 );
@@ -142,13 +161,16 @@ async function fuseData() {
             var q1 = parseInt(data[inertial_test[j]].quaternion[1]) / 1000;
             var q2 = parseInt(data[inertial_test[j]].quaternion[2]) / 1000;
             var q3 = parseInt(data[inertial_test[j]].quaternion[3]) / 1000;
-
+            
+            var qm = new THREE.Quaternion(q0, q1, q2, q3);
+            quat[i][inertial_test[j]].quat = qm;
             euler[i][inertial_test[j]].x  = Math.atan2(2 * (q0 * q1 + q2 * q3), 1 - (2 * (q1 * q1 + q2 * q2)))
             euler[i][inertial_test[j]].y  = Math.asin(2 * (q0 * q2 - q3 * q1));
             euler[i][inertial_test[j]].z  = Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - (2  * (q2 * q2 + q3 * q3)));
             
         }
         console.log(euler[i])
+        console.log(quat[i])
     }
     
 
@@ -195,31 +217,64 @@ function onMouseWheel( event ) {
 }
 
 function animate() {
-    console.log(weight)
+    // console.log(weight)
     requestAnimationFrame( animate );
     if(RUA) {
-        RUA.rotation.x = euler[weight]["RUA"].x 
-        RUA.rotation.y = euler[weight]["RUA"].y
-        RUA.rotation.z = euler[weight]["RUA"].z 
+        // var initial_quaternion;
+        // if(weight == 0)
+        //     initial_quaternion = quat[weight]
+        // else
+        //     initial_quaternion = quat[weight - 1]
+
+        // var final_quaternion = quat[weight]
+        // // console.log(final_quaternion, initial_quaternion)
+        // final_quaternion.multiply(initial_quaternion)
+        RUA.quaternion.set(quat[weight]["RUA"].quat.y, quat[weight]["RUA"].quat.z, quat[weight]["RUA"].quat.x, quat[weight]["RUA"].quat.w)
+        // RUA.rotation.x = euler[weight]["RUA"].x 
+        // RUA.rotation.y = euler[weight]["RUA"].y
+        // RUA.rotation.z = euler[weight]["RUA"].z
+        // RUA.eulerOrder = 'YZX'
+        
+        // RUA.applyQuaternion(quat[weight]);
+        
+        // RUA.quaternion.normalize();
     }
     if(RLA) {
-        RLA.rotation.x = euler[weight]["RLA"].x 
-        RLA.rotation.y = euler[weight]["RLA"].y
-        RLA.rotation.z = euler[weight]["RLA"].z 
+        RLA.quaternion.set(quat[weight]["RLA"].quat.y, quat[weight]["RLA"].quat.z, quat[weight]["RLA"].quat.x, quat[weight]["RLA"].quat.w)
+        
+        // RLA.rotation.x = euler[weight]["RLA"].x 
+        // RLA.rotation.y = euler[weight]["RLA"].y
+        // RLA.rotation.z = euler[weight]["RLA"].z 
+        // RLA.eulerOrder = 'YZX'
+        // RLA.applyQuaternion(quat[weight]);
+        // RLA.quaternion.normalize();
+        // RLA.quaternion.premultiply(quat[weight]);
     }
     
     if(LUA) {
-        LUA.rotation.x = euler[weight]["LUA"].x 
-        LUA.rotation.y = euler[weight]["LUA"].y
-        LUA.rotation.z = euler[weight]["LUA"].z 
+        LUA.quaternion.set(quat[weight]["LUA"].quat.y, quat[weight]["LUA"].quat.z, quat[weight]["LUA"].quat.x, quat[weight]["LUA"].quat.w)
+        
+        // LUA.rotation.x = euler[weight]["LUA"].x 
+        // LUA.rotation.y = euler[weight]["LUA"].y
+        // LUA.rotation.z = euler[weight]["LUA"].z 
+        // LUA.eulerOrder = 'YZX'
+        // LUA.applyQuaternion(quat[weight]);
+        // LUA.quaternion.normalize();
+        // LUA.quaternion.premultiply(quat[weight]);
     }
     if(LLA) {
-        LLA.rotation.x = euler[weight]["LLA"].x 
-        LLA.rotation.y = euler[weight]["LLA"].y
-        LLA.rotation.z = euler[weight]["LLA"].z 
+        LLA.quaternion.set(quat[weight]["LLA"].quat.y, quat[weight]["LLA"].quat.z, quat[weight]["LLA"].quat.x, quat[weight]["LLA"].quat.w)
+        
+        // LLA.rotation.x = euler[weight]["LLA"].x 
+        // LLA.rotation.y = euler[weight]["LLA"].y
+        // LLA.rotation.z = euler[weight]["LLA"].z 
+        // LLA.eulerOrder = 'YZX'
+        // LLA.applyQuaternion(quat[weight]);
+        // LLA.quaternion.normalize();
+        // LLA.quaternion.premultiply(quat[weight]);
     }
     controls.update();
-    
+    render();
 }
 function render() {
     renderer.render(scene, camera);
