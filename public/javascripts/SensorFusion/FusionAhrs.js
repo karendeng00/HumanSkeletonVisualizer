@@ -7,9 +7,9 @@ function FusionAhrsInitialise(fusionAhrs, gain, minMagneticField, maxMagneticFie
     fusionAhrs.gain = gain;
     fusionAhrs.minMagneticFieldSquared = minMagneticField * minMagneticField;
     fusionAhrs.maxMagneticFieldSquared = maxMagneticField * maxMagneticField;
-    fusionAhrs.quaternion = clone(FUSION_QUATERNION_IDENTITY);
-    fusionAhrs.linearAcceleration = clone(FUSION_VECTOR3_ZERO);
-    fusionAhrs.rampedGain = clone(INITIAL_GAIN);
+    fusionAhrs.quaternion.clone(FUSION_QUATERNION_IDENTITY);
+    fusionAhrs.linearAcceleration.clone(FUSION_VECTOR3_ZERO);
+    fusionAhrs.rampedGain.clone(INITIAL_GAIN);
     fusionAhrs.quaternion.element.w = 1.0;
     fusionAhrs.quaternion.element.x = 0.0;
     fusionAhrs.quaternion.element.y = 0.0;

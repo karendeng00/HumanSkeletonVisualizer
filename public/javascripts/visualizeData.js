@@ -48,6 +48,9 @@ for(var i = 0; i < 1000; i++) {
         },
         "LLA": {
             quat: new THREE.Quaternion()
+        },
+        "BACK": {
+            quat: new THREE.Quaternion()
         }
     }
     quat.push(angles)
@@ -99,14 +102,7 @@ function init() {
         // gltf.scene.position.set(-2,-2,-2)
         var model = gltf.scene;
         scene.add( model );
-
-        // centers the model
-        // var center = new THREE.Vector3();
-        // box.getCenter( center );
-        // obj.position.sub( center );
         
-        var fileAnimations = gltf.animations; //initializes animations
-
         model.traverse(obj => { //sets bones to variables 
             if (obj.isBone) { 
                 switch(obj.name) {
@@ -121,6 +117,9 @@ function init() {
                         break;
                     case "lowerarm_l":
                         LLA = obj;
+                        break;
+                    case "spine_03": //Back's IMU sensor is used as a reference point. Top of spine is approx placement
+                        BACK = obj;
                         break;
                 }
             }
@@ -142,35 +141,31 @@ function init() {
 
 
 async function fuseData() {
-    var raw_data = JSON.parse(localStorage.getItem('data'));
+    var raw_data = JSON.parse(localStorage.getItem('file'));
 
     var acc_data = ["RKN^", "HIP", "LUA^", "RUA_", "LH", "BACK", "RKN_", "RWR", "RUA^", "LUA_", "LWR", "RH"];
     var inertial_data = ["BACK", "RUA", "RLA", "LUA", "LLA"];
-    var inertial_test = ["RUA", "RLA", "LUA", "LLA"];
     var inertial_data_xyz = ["acc", "gyro", "magnetic", "quaternion"];
     var shoe_data = ["LSHOE", "RSHOE"];
     var shoe_data_xyz = ["Eu", "Nav", "Body", "AngVelBodyFrame", "AngVelNavFrame", "Compass"];
 
-    var quaternion = []
     for(var i = 0; i < 1000; i++) {
-        for(var j = 0; j < inertial_test.length; j++) {
+        for(var j = 0; j < inertial_data.length; j++) {
             var data = await raw_data[i]["inertial"]; 
             var t = raw_data[i]["time"];
                
-            var q0 = parseInt(data[inertial_test[j]].quaternion[0]) / 1000;
-            var q1 = parseInt(data[inertial_test[j]].quaternion[1]) / 1000;
-            var q2 = parseInt(data[inertial_test[j]].quaternion[2]) / 1000;
-            var q3 = parseInt(data[inertial_test[j]].quaternion[3]) / 1000;
+            var q0 = parseInt(data[inertial_data[j]].quaternion[0]) / 1000;
+            var q1 = parseInt(data[inertial_data[j]].quaternion[1]) / 1000;
+            var q2 = parseInt(data[inertial_data[j]].quaternion[2]) / 1000;
+            var q3 = parseInt(data[inertial_data[j]].quaternion[3]) / 1000;
             
             var qm = new THREE.Quaternion(q0, q1, q2, q3);
-            quat[i][inertial_test[j]].quat = qm;
-            euler[i][inertial_test[j]].x  = Math.atan2(2 * (q0 * q1 + q2 * q3), 1 - (2 * (q1 * q1 + q2 * q2)))
-            euler[i][inertial_test[j]].y  = Math.asin(2 * (q0 * q2 - q3 * q1));
-            euler[i][inertial_test[j]].z  = Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - (2  * (q2 * q2 + q3 * q3)));
+            quat[i][inertial_data[j]].quat = qm;
+            // euler[i][inertial_data[j]].x  = Math.atan2(2 * (q0 * q1 + q2 * q3), 1 - (2 * (q1 * q1 + q2 * q2)))
+            // euler[i][inertial_data[j]].y  = Math.asin(2 * (q0 * q2 - q3 * q1));
+            // euler[i][inertial_data[j]].z  = Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - (2  * (q2 * q2 + q3 * q3)));
             
         }
-        console.log(euler[i])
-        console.log(quat[i])
     }
     
 
@@ -191,7 +186,7 @@ function createPanel() {
             'time': 0
         };
         
-        folder2.add(panelSettings, "time", 0.0, 1000.0, 1.0).onChange( function ( time ) { 
+        folder2.add(panelSettings, "time", 0.0, 999, 1.0).onChange( function ( time ) { 
             // setWeight( settings.action, weight );
             weight = time;
         });
@@ -219,6 +214,10 @@ function onMouseWheel( event ) {
 function animate() {
     // console.log(weight)
     requestAnimationFrame( animate );
+    var q = new THREE.Quaternion();
+    var pivot = new THREE.Quaternion();
+    pivot.set(quat[weight]["BACK"].quat.y, quat[weight]["BACK"].quat.z, quat[weight]["BACK"].quat.x, quat[weight]["BACK"].quat.w)
+
     if(RUA) {
         // var initial_quaternion;
         // if(weight == 0)
@@ -229,10 +228,13 @@ function animate() {
         // var final_quaternion = quat[weight]
         // // console.log(final_quaternion, initial_quaternion)
         // final_quaternion.multiply(initial_quaternion)
-        RUA.quaternion.set(quat[weight]["RUA"].quat.y, quat[weight]["RUA"].quat.z, quat[weight]["RUA"].quat.x, quat[weight]["RUA"].quat.w)
-        // RUA.rotation.x = euler[weight]["RUA"].x 
-        // RUA.rotation.y = euler[weight]["RUA"].y
-        // RUA.rotation.z = euler[weight]["RUA"].z
+        q.set(quat[weight]["RUA"].quat.y, quat[weight]["RUA"].quat.z, quat[weight]["RUA"].quat.x, quat[weight]["RUA"].quat.w);    
+        q = q.multiply(pivot).normalize();
+        RUA.setRotationFromQuaternion(q);
+
+        // RUA.rotation.x = euler[weight]["RUA"].y 
+        // RUA.rotation.y = euler[weight]["RUA"].z
+        // RUA.rotation.z = euler[weight]["RUA"].x
         // RUA.eulerOrder = 'YZX'
         
         // RUA.applyQuaternion(quat[weight]);
@@ -240,11 +242,15 @@ function animate() {
         // RUA.quaternion.normalize();
     }
     if(RLA) {
-        RLA.quaternion.set(quat[weight]["RLA"].quat.y, quat[weight]["RLA"].quat.z, quat[weight]["RLA"].quat.x, quat[weight]["RLA"].quat.w)
-        
-        // RLA.rotation.x = euler[weight]["RLA"].x 
-        // RLA.rotation.y = euler[weight]["RLA"].y
-        // RLA.rotation.z = euler[weight]["RLA"].z 
+        q.set(quat[weight]["RLA"].quat.y, quat[weight]["RLA"].quat.z, quat[weight]["RLA"].quat.x, quat[weight]["RLA"].quat.w);
+        q = q.multiply(pivot).normalize();
+        RLA.setRotationFromQuaternion(q);
+
+        // RLA.rotation.x = euler[weight]["RLA"].y;
+        // RLA.rotation.y = euler[weight]["RLA"].z;
+        // RLA.rotation.z = euler[weight]["RLA"].x;
+
+ 
         // RLA.eulerOrder = 'YZX'
         // RLA.applyQuaternion(quat[weight]);
         // RLA.quaternion.normalize();
@@ -252,27 +258,32 @@ function animate() {
     }
     
     if(LUA) {
-        LUA.quaternion.set(quat[weight]["LUA"].quat.y, quat[weight]["LUA"].quat.z, quat[weight]["LUA"].quat.x, quat[weight]["LUA"].quat.w)
-        
-        // LUA.rotation.x = euler[weight]["LUA"].x 
-        // LUA.rotation.y = euler[weight]["LUA"].y
-        // LUA.rotation.z = euler[weight]["LUA"].z 
+        q.set(quat[weight]["LUA"].quat.y, quat[weight]["LUA"].quat.z, quat[weight]["LUA"].quat.x, quat[weight]["LUA"].quat.w)
+        q = q.multiply(pivot).normalize();
+        LUA.setRotationFromQuaternion(q);
+
+        // LUA.rotation.x = euler[weight]["LUA"].y 
+        // LUA.rotation.y = euler[weight]["LUA"].z
+        // LUA.rotation.z = euler[weight]["LUA"].x
         // LUA.eulerOrder = 'YZX'
         // LUA.applyQuaternion(quat[weight]);
         // LUA.quaternion.normalize();
         // LUA.quaternion.premultiply(quat[weight]);
     }
     if(LLA) {
-        LLA.quaternion.set(quat[weight]["LLA"].quat.y, quat[weight]["LLA"].quat.z, quat[weight]["LLA"].quat.x, quat[weight]["LLA"].quat.w)
-        
-        // LLA.rotation.x = euler[weight]["LLA"].x 
-        // LLA.rotation.y = euler[weight]["LLA"].y
-        // LLA.rotation.z = euler[weight]["LLA"].z 
+        q.set(quat[weight]["LLA"].quat.y, quat[weight]["LLA"].quat.z, quat[weight]["LLA"].quat.x, quat[weight]["LLA"].quat.w)
+        q = q.multiply(pivot).normalize();
+        LLA.setRotationFromQuaternion(q);
+
+        // LLA.rotation.x = euler[weight]["LLA"].y 
+        // LLA.rotation.y = euler[weight]["LLA"].z
+        // LLA.rotation.z = euler[weight]["LLA"].x 
         // LLA.eulerOrder = 'YZX'
         // LLA.applyQuaternion(quat[weight]);
         // LLA.quaternion.normalize();
         // LLA.quaternion.premultiply(quat[weight]);
     }
+    
     controls.update();
     render();
 }
