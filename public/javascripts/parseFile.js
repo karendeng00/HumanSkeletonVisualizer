@@ -21,33 +21,34 @@ function openFile() {
     }
 }
 
-function parseData(result) {
+async function parseData(result) {
     var lines = result.split('\n');
     
-    window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-    if (!window.indexedDB) {
-        console.log("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
-    }
+
     var db;
-    var request = window.indexedDB.open("HAR"); //opens a database called HAR using version 1
+    let request = await indexedDB.open("HAR"); //opens a database called HAR using version 1
     
     request.onerror = function(event) {
         console.log("Could not open database")
     };
 
-    request.onupgradeneeded = function(event) { //creates database if it doesn't already exist
-        db = event.target.result;
-        if (event.oldVersion < 1) {
-            var store = db.createObjectStore("SensorData", {keyPath: "time"}); //objectStore = collection
-            store.createIndex("acc_data", "acc_data", {unique: false}); 
-            store.createIndex("inertial_data", "inertial_data", {unique: false});
-            store.createIndex("shoe_data", "shoe_data", {unique: false})
-            
-            
+    request.onupgradeneeded = function() { //creates database if it doesn't already exist
+        db = request.result;
+        if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
+            db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
         }
-    };
-
-    for(var line = 0; line < 1000; line++){
+    }
+    request.onsuccess= function() { //creates database if it doesn't already exist
+        db = request.result;
+        if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
+            db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
+        }
+        let transaction = db.transaction("SensorData", "readwrite");
+        let dbrequest = transaction.objectStore("SensorData").add(dict);
+    }   
+    
+    
+    for(var line = 1000; line < 2000; line++){
         // if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
         //     continue;
         // }
@@ -131,6 +132,7 @@ function parseData(result) {
         //     counter++
         // }
         dict = {
+            "id": line,
             "time": arr[0],
             "acc": acc,
             "inertial": inertial,
@@ -139,12 +141,21 @@ function parseData(result) {
             // "furniture_acc": furniture_acc,
             // "location": location
         }
-        res[line] = dict;
+        res.push(dict)
     }
-    
+    // console.log(request)
+    // let transaction = db.transaction("SensorData", "readwrite");
+    // let sensorData = transaction.objectStore("SensorData");
+    // let dbrequest = sensorData.add(dict);
+    // dbrequest.onsuccess = function() { // (4)
+    //     console.log("Book added to the store", dbrequest.result);
+    //     };
+        
+    //     dbrequest.onerror = function() {
+    //     console.log("Error", dbrequest.error);
+    //     };
     // localStorage.setItem('data', JSON.stringify(lines));
     //initialize indexedDB
-    
    
     // request.onsuccess = function(event) {
     // db = event.target.result;
