@@ -3,8 +3,9 @@ import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/t
 import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/loaders/GLTFLoader.js';
 import {GUI} from "../../blender/dat.gui.module.d.js";
 
+
 let camera, scene, renderer, controls, stats;
-let BACK, RUA, RLA, LUA, LLA;
+let BACK, RUA, RLA, LUA, LLA, LSHOE, RSHOE;
 
 var weight = 0;
 var quat = []
@@ -24,6 +25,16 @@ for(var i = 0; i < 1000; i++) {
         },
         "BACK": {
             quat: new THREE.Quaternion()
+        },
+        "LSHOE": {
+            x: 0,
+            y: 0,
+            z: 0
+        },
+        "RSHOE": {
+            x: 0,
+            y: 0,
+            z: 0
         }
     }
     quat.push(angles)
@@ -94,6 +105,12 @@ function init() {
                     case "spine_03": //Back's IMU sensor is used as a reference point. Top of spine is approx placement
                         BACK = obj;
                         break;
+                    case "foot_l":
+                        LSHOE = obj;
+                        break;
+                    case "foot_r":
+                        RSHOE = obj;
+                        break;
                 }
             }
         });
@@ -101,6 +118,8 @@ function init() {
     BACK.attach(RLA)
     BACK.attach(LUA)
     BACK.attach(LLA)
+    BACK.attach(LSHOE);
+    BACK.attach(RSHOE);
 
         var mixer = new THREE.AnimationMixer(model); //used in "update"
     // renderer.render(scene, camera);
@@ -118,6 +137,27 @@ function init() {
 
 
 async function fuseData() {
+    // var raw_data = []
+    // let request = indexedDB.open("DB");
+    // request.onsuccess= async function() {
+    //     var db = request.result;
+    //     var transaction = db.transaction(["SensorData"]);
+    //     var objectStore = transaction.objectStore("SensorData");
+    //     for(var i = 0; i < 1000; i++) {
+    //         var dbrequest = await objectStore.get(i+"");
+    //         dbrequest.onerror = function(event) {
+    //             console.log(dbrequest.error)
+    //         };
+    //         dbrequest.onsuccess = async function(event) {
+    //         // Do something with the request.result!
+    //             var time =  await dbrequest.result;
+    //             var dict = {
+    //                 "time": time
+    //             }
+    //             raw_data.push(dict)
+    //         };
+    //     }
+    // }
     var raw_data = JSON.parse(localStorage.getItem('file'));
     console.log(raw_data)
     var acc_data = ["RKN^", "HIP", "LUA^", "RUA_", "LH", "BACK", "RKN_", "RWR", "RUA^", "LUA_", "LWR", "RH"];
@@ -127,8 +167,9 @@ async function fuseData() {
     var shoe_data_xyz = ["Eu", "Nav", "Body", "AngVelBodyFrame", "AngVelNavFrame", "Compass"];
 
     for(var i = 0; i < 1000; i++) {
+        var data = await raw_data[i]["inertial"]; 
         for(var j = 0; j < inertial_data.length; j++) {
-            var data = await raw_data[i]["inertial"]; 
+            
             var t = raw_data[i]["time"];
                
             var q0 = parseInt(data[inertial_data[j]].quaternion[0]) / 1000;
@@ -139,6 +180,13 @@ async function fuseData() {
             var qm = new THREE.Quaternion(q0, q1, q2, q3);
             quat[i][inertial_data[j]].quat = qm;
         }
+        quat[i]["LSHOE"].x = data["LSHOE"].Eu[0];
+        quat[i]["LSHOE"].y = data["LSHOE"].Eu[1];
+        quat[i]["LSHOE"].z = data["LSHOE"].Eu[2];
+
+        quat[i]["RSHOE"].x = data["RSHOE"].Eu[0];
+        quat[i]["RSHOE"].y = data["RSHOE"].Eu[1];
+        quat[i]["RSHOE"].z = data["RSHOE"].Eu[2];
     }
     
 
@@ -164,17 +212,11 @@ function createPanel() {
             weight = time;
         });
 
-        folder2.add( panelSettings, 'gaussian_filter', 0.0, 1.5, 0.01).onChange( modifyTimeScale );
+        // folder2.add( panelSettings, 'gaussian_filter', 0.0, 1.5, 0.01).onChange( modifyTimeScale );
         folder2.open();
 
 }
 
-// function setWeight(weight ) {
-//     console.log(weight)
-//     this.weight = weight
-//     animate()
-
-// }
 function modifyTimeScale( speed ) {
     console.log(speed)
     // mixer.timeScale = speed;
@@ -230,6 +272,16 @@ function animate() {
         // LLA.setRotationFromQuaternion(q);
 
     }
+    // if(LSHOE) {
+    //     LSHOE.rotation.x = quat[weight]["LSHOE"].x
+    //     LSHOE.rotation.y = quat[weight]["LSHOE"].y
+    //     LSHOE.rotation.z = quat[weight]["LSHOE"].z
+    // }
+    // if(RSHOE) {
+    //     RSHOE.rotation.x = quat[weight]["RSHOE"].x
+    //     RSHOE.rotation.y = quat[weight]["RSHOE"].y
+    //     RSHOE.rotation.z = quat[weight]["RSHOE"].z
+    // }
     
     controls.update();
     render();

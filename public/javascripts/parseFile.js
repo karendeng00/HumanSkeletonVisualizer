@@ -26,29 +26,32 @@ async function parseData(result) {
     
 
     var db;
-    let request = await indexedDB.open("HAR"); //opens a database called HAR using version 1
+    let request = window.indexedDB.open("DB2"); //opens a database called HAR using version 1
     
     request.onerror = function(event) {
         console.log("Could not open database")
     };
 
     request.onupgradeneeded = function() { //creates database if it doesn't already exist
+        console.log("hello")
         db = request.result;
         if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
             db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
         }
     }
     request.onsuccess= function() { //creates database if it doesn't already exist
+        console.log("what")
         db = request.result;
+        console.log(db)
         if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
             db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
         }
-        let transaction = db.transaction("SensorData", "readwrite");
-        let dbrequest = transaction.objectStore("SensorData").add(dict);
+        // let transaction = db.transaction("SensorData", "readwrite");
+        // let dbrequest = transaction.objectStore("SensorData").add(dict);
     }   
     
     
-    for(var line = 1000; line < 2000; line++){
+    for(var line = 0; line < lines.length; line += lines.length / 10){
         // if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
         //     continue;
         // }
@@ -132,7 +135,7 @@ async function parseData(result) {
         //     counter++
         // }
         dict = {
-            "id": line,
+            "id": "" + line,
             "time": arr[0],
             "acc": acc,
             "inertial": inertial,
@@ -143,23 +146,28 @@ async function parseData(result) {
         }
         res.push(dict)
     }
-    // console.log(request)
-    // let transaction = db.transaction("SensorData", "readwrite");
-    // let sensorData = transaction.objectStore("SensorData");
-    // let dbrequest = sensorData.add(dict);
-    // dbrequest.onsuccess = function() { // (4)
-    //     console.log("Book added to the store", dbrequest.result);
-    //     };
+
+    request.onsuccess = function() { // (4)
+        db = request.result;
         
-    //     dbrequest.onerror = function() {
-    //     console.log("Error", dbrequest.error);
-    //     };
-    // localStorage.setItem('data', JSON.stringify(lines));
-    //initialize indexedDB
-   
-    // request.onsuccess = function(event) {
-    // db = event.target.result;
-    // };
+        let transaction = db.transaction(["SensorData"], "readwrite");
+        let sensorData = transaction.objectStore("SensorData");
+        res.forEach(function(customer) {
+            var dbrequest = sensorData.add(customer);
+            
+            dbrequest.onsuccess = function() {
+                console.log("Book added to the store", dbrequest.result);
+                console.log(sensorData)
+            };
+            
+            dbrequest.onerror = function(event) {
+                console.log("Error", event.target.result);
+            };
+        });
+        
+    }
+
+    
     localStorage.setItem('file', JSON.stringify(res));
     
     window.location.href = "../visualize";
