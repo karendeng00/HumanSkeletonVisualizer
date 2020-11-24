@@ -193,7 +193,7 @@ function animate() {
 
     if(RUA) {
         
-        RUA.quaternion.set(quat[weight]["RUA"].quat.x,quat[weight]["RUA"].quat.y, quat[weight]["RUA"].quat.z,  quat[weight]["RUA"].quat.w);    
+        RUA.quaternion.set(quat[weight]["RUA"].quat.y,quat[weight]["RUA"].quat.x, quat[weight]["RUA"].quat.z,  quat[weight]["RUA"].quat.w);    
         
         // q = q.multiply(pivot).normalize();
         // RUA.setRotationFromQuaternion(q);
@@ -216,7 +216,7 @@ function animate() {
     }
     
     if(LUA) {
-        LUA.quaternion.set(quat[weight]["LUA"].quat.x, quat[weight]["LUA"].quat.y, quat[weight]["LUA"].quat.z, quat[weight]["LUA"].quat.w)
+        LUA.quaternion.set(quat[weight]["LUA"].quat.y, quat[weight]["LUA"].quat.x, quat[weight]["LUA"].quat.z, quat[weight]["LUA"].quat.w)
         // LUA.quaternion.set(q);
         // q = q.multiply(pivot).normalize();
         // LUA.setRotationFromQuaternion(q);
