@@ -19,42 +19,40 @@ function openFile() {
                 .innerHTML="done";
         parseData(result);
     }
+    
 }
 
 async function parseData(result) {
     var lines = result.split('\n');
     
+    // var db;
+    // let request = window.indexedDB.open("DB2"); //opens a database called HAR using version 1
+    
+    // request.onerror = function(event) {
+    //     console.log("Could not open database")
+    // };
 
-    var db;
-    let request = window.indexedDB.open("DB2"); //opens a database called HAR using version 1
-    
-    request.onerror = function(event) {
-        console.log("Could not open database")
-    };
-
-    request.onupgradeneeded = function() { //creates database if it doesn't already exist
-        console.log("hello")
-        db = request.result;
-        if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
-            db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
+    // request.onupgradeneeded = function() { //creates database if it doesn't already exist
+    //     console.log("hello")
+    //     db = request.result;
+    //     if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
+    //         db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
+    //     }
+    // }
+    // request.onsuccess= function() { //creates database if it doesn't already exist
+    //     console.log("what")
+    //     db = request.result;
+    //     console.log(db)
+    //     if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
+    //         db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
+    //     }
+    //     // let transaction = db.transaction("SensorData", "readwrite");
+    //     // let dbrequest = transaction.objectStore("SensorData").add(dict);
+    // }   
+    for(var line = 0; line < 1000; line ++){
+        if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
+            continue;
         }
-    }
-    request.onsuccess= function() { //creates database if it doesn't already exist
-        console.log("what")
-        db = request.result;
-        console.log(db)
-        if (!db.objectStoreNames.contains('SensorData')) { // if there's no "books" store
-            db.createObjectStore('SensorData', {keyPath: 'id', autoIncrement: true}); // create it
-        }
-        // let transaction = db.transaction("SensorData", "readwrite");
-        // let dbrequest = transaction.objectStore("SensorData").add(dict);
-    }   
-    
-    
-    for(var line = 0; line < lines.length; line += lines.length / 10){
-        // if (!lines[line].includes("NaN")) { //for now stops once you hit a line with missing data
-        //     continue;
-        // }
 
         var dict = new Object();
         var arr = lines[line].split(' ')
@@ -147,25 +145,25 @@ async function parseData(result) {
         res.push(dict)
     }
 
-    request.onsuccess = function() { // (4)
-        db = request.result;
+    // request.onsuccess = function() { // (4)
+    //     db = request.result;
         
-        let transaction = db.transaction(["SensorData"], "readwrite");
-        let sensorData = transaction.objectStore("SensorData");
-        res.forEach(function(customer) {
-            var dbrequest = sensorData.add(customer);
+    //     let transaction = db.transaction(["SensorData"], "readwrite");
+    //     let sensorData = transaction.objectStore("SensorData");
+    //     res.forEach(function(customer) {
+    //         var dbrequest = sensorData.add(customer);
             
-            dbrequest.onsuccess = function() {
-                console.log("Book added to the store", dbrequest.result);
-                console.log(sensorData)
-            };
+    //         dbrequest.onsuccess = function() {
+    //             console.log("Book added to the store", dbrequest.result);
+    //             console.log(sensorData)
+    //         };
             
-            dbrequest.onerror = function(event) {
-                console.log("Error", event.target.result);
-            };
-        });
+    //         dbrequest.onerror = function(event) {
+    //             console.log("Error", event.target.result);
+    //         };
+    //     });
         
-    }
+    // }
 
     
     localStorage.setItem('file', JSON.stringify(res));

@@ -118,8 +118,8 @@ function init() {
     BACK.attach(RLA)
     BACK.attach(LUA)
     BACK.attach(LLA)
-    BACK.attach(LSHOE);
-    BACK.attach(RSHOE);
+    // BACK.attach(LSHOE);
+    // BACK.attach(RSHOE);
 
         var mixer = new THREE.AnimationMixer(model); //used in "update"
     // renderer.render(scene, camera);
